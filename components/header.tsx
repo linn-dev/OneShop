@@ -34,6 +34,11 @@ export default function Header() {
           <Link href="/" className="text-zinc-600 hover:text-zinc-900">
             Browse
           </Link>
+          {session?.user && (
+            <Link href="/profile" className="text-zinc-600 hover:text-zinc-900">
+              Profile
+            </Link>
+          )}
           <Link
             href="/sell"
             className="rounded-full bg-primary px-3 py-1.5 font-medium text-primary-foreground hover:bg-emerald-700"

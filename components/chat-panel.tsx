@@ -25,10 +25,12 @@ export default function ChatPanel({
   itemId,
   isOwner,
   initialStatus = "available",
+  conversationId,
 }: {
   itemId: string;
   isOwner: boolean;
   initialStatus?: string;
+  conversationId?: string;
 }) {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -43,12 +45,15 @@ export default function ChatPanel({
   const sold = itemStatus === "sold";
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/chat?itemId=${encodeURIComponent(itemId)}`);
+    const query = conversationId
+      ? `conversationId=${encodeURIComponent(conversationId)}`
+      : `itemId=${encodeURIComponent(itemId)}`;
+    const res = await fetch(`/api/chat?${query}`);
     if (res.status === 401) return;
     const data = await res.json();
     setMessages(data.messages ?? []);
     if (data.item?.status) setItemStatus(data.item.status);
-  }, [itemId]);
+  }, [itemId, conversationId]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -64,7 +69,11 @@ export default function ChatPanel({
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId, text: body }),
+      body: JSON.stringify({
+        itemId,
+        conversationId,
+        text: body,
+      }),
     });
     const data = await res.json();
     if (!res.ok) {

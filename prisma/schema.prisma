@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  phoneVerified Boolean   @default(false)
+  rating        Float     @default(5.0)
+  dealsDone     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  items         Item[]
+  sentMessages  Message[] @relation("sent")
+  recvMessages  Message[] @relation("recv")
+}
+
+model Item {
+  id            String         @id @default(cuid())
+  title         String
+  description   String
+  price         Float
+  category      String
+  imageUrl      String
+  status        String         @default("available") // available | sold
+  lat           Float?
+  lng           Float?
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  conversations Conversation[]
+  createdAt     DateTime       @default(now())
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  buyerId   String
+  sellerId  String
+  itemId    String
+  item      Item      @relation(fields: [itemId], references: [id])
+  messages  Message[]
+
+  @@unique([buyerId, itemId])
+}
+
+model Message {
+  id         String       @id @default(cuid())
+  convId     String
+  conv       Conversation @relation(fields: [convId], references: [id])
+  senderId   String
+  sender     User         @relation("sent", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User         @relation("recv", fields: [receiverId], references: [id])
+  text       String
+  createdAt  DateTime     @default(now())
+}

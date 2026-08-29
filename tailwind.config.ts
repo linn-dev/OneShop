@@ -69,6 +69,20 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        sm: "0 1px 2px 0 rgb(28 25 23 / 0.05)",
+        md: "0 4px 12px -2px rgb(28 25 23 / 0.08), 0 2px 4px -2px rgb(28 25 23 / 0.05)",
+        lg: "0 12px 40px -8px rgb(28 25 23 / 0.12), 0 4px 12px -4px rgb(28 25 23 / 0.06)",
+      },
+      keyframes: {
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+      },
+      animation: {
+        shimmer: "shimmer 1.5s linear infinite",
+      },
       fontFamily: {
         sans: ["var(--font-sans)"],
       },

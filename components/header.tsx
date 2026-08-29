@@ -4,6 +4,7 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Logo, Wordmark } from "@/components/logo";
 
 export default function Header() {
   const { data: session, status, update } = useSession();
@@ -23,18 +24,19 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-emerald-100 bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="text-lg font-semibold tracking-tight text-zinc-900">
-          Swappr
+        <Link href="/" className="flex items-center gap-2">
+          <Logo />
+          <Wordmark />
         </Link>
-        <nav className="flex items-center gap-3 text-sm">
+        <nav className="flex flex-wrap items-center justify-end gap-2 text-sm sm:gap-3">
           <Link href="/" className="text-zinc-600 hover:text-zinc-900">
             Browse
           </Link>
           <Link
             href="/sell"
-            className="rounded-full bg-zinc-900 px-3 py-1.5 font-medium text-white hover:bg-zinc-700"
+            className="rounded-full bg-primary px-3 py-1.5 font-medium text-primary-foreground hover:bg-emerald-700"
           >
             Sell
           </Link>
@@ -43,7 +45,7 @@ export default function Header() {
           ) : session?.user ? (
             <div className="flex items-center gap-2">
               {session.user.phoneVerified ? (
-                <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+                <span className="rounded-full bg-accent px-2 py-1 text-xs font-medium text-accent-foreground">
                   Phone verified
                 </span>
               ) : (

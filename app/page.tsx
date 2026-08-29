@@ -15,11 +15,10 @@ export default async function HomePage() {
       },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.item.count({ where: { status: "available" } }),
+    prisma.item.count(),
     prisma.user.count({ where: { phoneVerified: true } }),
     prisma.user.aggregate({
       _sum: { dealsDone: true },
-      _avg: { rating: true },
     }),
   ]);
 
@@ -41,11 +40,10 @@ export default async function HomePage() {
           listings: listingCount,
           verifiedSellers,
           dealsDone: dealAgg._sum.dealsDone ?? 0,
-          avgRating: dealAgg._avg.rating ?? 0,
         }}
       />
 
-      <section id="listings" className="scroll-mt-20 pt-10">
+      <section className="pt-10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Nearby listings</h2>

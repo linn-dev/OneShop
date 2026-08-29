@@ -30,6 +30,7 @@ export function SellForm() {
   const [saving, setSaving] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [aiDrafted, setAiDrafted] = useState(false);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -38,6 +39,7 @@ export function SellForm() {
   async function handleFile(file: File) {
     setError(null);
     setProvider(null);
+    setAiDrafted(false);
     setAnalyzing(true);
     setForm(emptyForm);
 
@@ -78,6 +80,7 @@ export function SellForm() {
         suggestedPrice:
           listJson.suggestedPrice != null ? String(listJson.suggestedPrice) : "",
       });
+      setAiDrafted(true);
       setProvider(listJson.provider ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -137,8 +140,22 @@ export function SellForm() {
     }
   }
 
+  const step = saving ? 3 : analyzing ? 2 : imageUrl && form.title ? 3 : preview ? 2 : 1;
+
   return (
     <form onSubmit={onSubmit} className="mt-8 space-y-6">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" aria-label="Listing steps">
+        <Step n={1} label="Photo" current={step} />
+        <span className="text-muted-foreground" aria-hidden>
+          ·
+        </span>
+        <Step n={2} label="AI draft" current={step} />
+        <span className="text-muted-foreground" aria-hidden>
+          ·
+        </span>
+        <Step n={3} label="Publish" current={step} />
+      </div>
+
       <div>
         <input
           ref={inputRef}
@@ -153,26 +170,42 @@ export function SellForm() {
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) void handleFile(file);
+          }}
           disabled={analyzing}
           className={cn(
-            "flex w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted/40 text-sm transition hover:bg-muted/70",
-            preview ? "p-0" : "min-h-48 px-4 py-10",
+            "flex w-full flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-emerald-300 bg-emerald-50/40 text-sm transition hover:bg-emerald-50/70 disabled:opacity-80",
+            preview ? "p-0" : "min-h-64 px-6 py-16 sm:min-h-72",
           )}
         >
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="Item preview" className="max-h-72 w-full object-cover" />
+            <img src={preview} alt="Item preview" className="max-h-80 w-full object-cover" />
           ) : (
             <>
-              <span className="font-medium">Upload a photo</span>
-              <span className="mt-1 text-muted-foreground">
+              <span className="text-base font-semibold text-emerald-900">Drop a photo or click to upload</span>
+              <span className="mt-2 text-muted-foreground">
                 JPEG, PNG, WebP, or GIF · stored in /public/uploads
               </span>
             </>
           )}
         </button>
         {analyzing && (
-          <p className="mt-2 text-sm text-muted-foreground">Analyzing photo and drafting the listing…</p>
+          <div className="mt-4 rounded-2xl border border-emerald-100 bg-card p-4">
+            <p className="text-sm font-medium text-foreground">AI is drafting your listing…</p>
+            <div className="mt-3 space-y-2" aria-hidden>
+              <ShimmerBar className="h-3 w-full" />
+              <ShimmerBar className="h-3 w-5/6" />
+              <ShimmerBar className="h-3 w-2/3" />
+            </div>
+          </div>
         )}
         {provider === "fallback" && (
           <p className="mt-2 text-sm text-muted-foreground">
@@ -183,7 +216,14 @@ export function SellForm() {
       </div>
 
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium">Title</span>
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium">Title</span>
+          {aiDrafted && (
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+              AI draft ✓
+            </span>
+          )}
+        </span>
         <input
           required
           value={form.title}
@@ -203,7 +243,7 @@ export function SellForm() {
         />
       </label>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block space-y-1.5">
           <span className="text-sm font-medium">Category</span>
           <select
@@ -240,3 +280,42 @@ export function SellForm() {
     </form>
   );
 }
+
+function Step({ n, label, current }: { n: number; label: string; current: number }) {
+  const active = current === n;
+  const done = current > n;
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-1.5 font-medium",
+        active && "text-primary",
+        done && "text-emerald-700",
+        !active && !done && "text-muted-foreground",
+      )}
+    >
+      <span
+        className={cn(
+          "flex size-6 items-center justify-center rounded-full text-xs",
+          active && "bg-primary text-primary-foreground",
+          done && "bg-emerald-100 text-emerald-800",
+          !active && !done && "bg-muted text-muted-foreground",
+        )}
+      >
+        {n}
+      </span>
+      {label}
+    </div>
+  );
+}
+
+function ShimmerBar({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "animate-shimmer rounded-full bg-[length:200%_100%] bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200",
+        className,
+      )}
+    />
+  );
+}
+

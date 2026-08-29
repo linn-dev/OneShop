@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   PUBLIC_MEETUP_PLACES,
   safeMeetupTemplate,
@@ -38,6 +40,7 @@ export default function ChatPanel({
   const [pending, setPending] = useState(false);
   const [selling, setSelling] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const sold = itemStatus === "sold";
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/chat?itemId=${encodeURIComponent(itemId)}`);
@@ -86,8 +89,17 @@ export default function ChatPanel({
     }
   }
 
-  function insertMeetupTemplate() {
-    setText(safeMeetupTemplate(place));
+  async function sendMeetupSuggestion() {
+    if (sold || pending) return;
+    setError("");
+    setPending(true);
+    try {
+      await sendMessage(safeMeetupTemplate(place));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send.");
+    } finally {
+      setPending(false);
+    }
   }
 
   async function markAsSold() {
@@ -134,8 +146,6 @@ export default function ChatPanel({
     );
   }
 
-  const sold = itemStatus === "sold";
-
   return (
     <div className="flex flex-col rounded-2xl border border-zinc-200 p-4">
       <div className="flex items-start justify-between gap-3">
@@ -178,14 +188,20 @@ export default function ChatPanel({
             return (
               <div
                 key={m.id}
-                className={`max-w-[85%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm ${
+                className={cn(
+                  "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm",
                   mine
-                    ? "ml-auto bg-zinc-900 text-white"
-                    : "bg-white text-zinc-800 shadow-sm"
-                }`}
+                    ? "ml-auto bg-primary text-primary-foreground"
+                    : "border border-zinc-200 bg-white text-zinc-800 shadow-sm",
+                )}
               >
                 <p>{m.text}</p>
-                <p className={`mt-1 text-[10px] ${mine ? "text-zinc-300" : "text-zinc-400"}`}>
+                <p
+                  className={cn(
+                    "mt-1 text-[10px]",
+                    mine ? "text-primary-foreground/70" : "text-zinc-400",
+                  )}
+                >
                   {m.sender.name || m.sender.email}
                 </p>
               </div>
@@ -194,28 +210,38 @@ export default function ChatPanel({
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <select
-          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-zinc-900"
-          value={place}
-          onChange={(e) => setPlace(e.target.value as PublicMeetupPlace)}
-          disabled={sold}
-        >
-          {PUBLIC_MEETUP_PLACES.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <Button
+      <div className="mt-3 space-y-2">
+        <label className="block text-xs font-medium text-zinc-500">
+          Meetup place
+          <select
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-zinc-900"
+            value={place}
+            onChange={(e) => setPlace(e.target.value as PublicMeetupPlace)}
+            disabled={sold}
+          >
+            {PUBLIC_MEETUP_PLACES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
           type="button"
-          size="sm"
-          variant="outline"
-          disabled={sold}
-          onClick={insertMeetupTemplate}
+          disabled={sold || pending}
+          onClick={() => void sendMeetupSuggestion()}
+          className="flex w-full items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-3 py-2.5 text-left transition hover:bg-emerald-50 disabled:opacity-60"
         >
-          Suggest safe meetup
-        </Button>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
+            <MapPin className="size-4" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium capitalize text-emerald-950">{place}</span>
+            <span className="block text-xs text-emerald-800/80">
+              {pending ? "Sending…" : "Tap to send"}
+            </span>
+          </span>
+        </button>
       </div>
 
       <form onSubmit={onSubmit} className="mt-3 flex gap-2">

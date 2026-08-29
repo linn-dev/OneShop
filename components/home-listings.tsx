@@ -99,21 +99,23 @@ export function HomeListings({ items }: { items: Item[] }) {
         </p>
       )}
 
-      {visible.length === 0 ? (
-        <p className="mt-12 text-center text-zinc-500">
-          {items.length === 0
-            ? "No listings yet. Run npm run seed, then sign in to publish more."
-            : "No items in this category."}
-        </p>
-      ) : (
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((item) => (
-            <li key={item.id}>
-              <ItemCard item={item} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <div id="listings" className="scroll-mt-24">
+        {visible.length === 0 ? (
+          <p className="mt-12 text-center text-zinc-500">
+            {items.length === 0
+              ? "No listings yet. Run npm run seed, then sign in to publish more."
+              : "No items in this category."}
+          </p>
+        ) : (
+          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visible.map((item) => (
+              <li key={item.id}>
+                <ItemCard item={item} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

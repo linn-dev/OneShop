@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ListingImage } from "@/components/listing-image";
+import { UserAvatar } from "@/components/user-avatar";
+import { formatPrice } from "@/lib/money";
 
 export type ListingCardItem = {
   id: string;
@@ -12,18 +14,9 @@ export type ListingCardItem = {
     name: string | null;
     email: string;
     rating: number;
+    image?: string | null;
   };
 };
-
-function sellerInitials(user: ListingCardItem["user"]): string {
-  const source = (user.name || user.email).trim();
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
-  }
-  const local = source.includes("@") ? source.slice(0, source.indexOf("@")) : source;
-  return local.slice(0, 2).toUpperCase();
-}
 
 export function ItemCard({ item }: { item: ListingCardItem }) {
   const sellerLabel = item.user.name || item.user.email;
@@ -43,18 +36,13 @@ export function ItemCard({ item }: { item: ListingCardItem }) {
           {item.category}
         </span>
         <span className="absolute bottom-3 left-3 z-10 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
-          ${item.price.toFixed(2)}
+          {formatPrice(item.price)}
         </span>
       </div>
       <div className="p-3">
         <p className="truncate font-medium text-foreground">{item.title}</p>
         <div className="mt-2 flex min-w-0 items-center gap-2">
-          <span
-            aria-hidden
-            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-semibold text-emerald-800"
-          >
-            {sellerInitials(item.user)}
-          </span>
+          <UserAvatar src={item.user.image} alt={sellerLabel} size="sm" />
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             ★ {item.user.rating.toFixed(1)}
           </span>

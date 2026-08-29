@@ -121,7 +121,7 @@ export function SellForm() {
           title: form.title,
           description: form.description,
           category: form.category,
-          price: Number.parseFloat(form.suggestedPrice),
+          price: Math.round(Number.parseFloat(form.suggestedPrice)),
           imageUrl,
           lat,
           lng,
@@ -267,12 +267,13 @@ export function SellForm() {
           </select>
         </label>
         <label className="block space-y-1.5">
-          <span className="text-sm font-medium">Price</span>
+          <span className="text-sm font-medium">Price (MMK)</span>
           <input
             required
             type="number"
-            min="0.01"
-            step="0.01"
+            min="1"
+            step="1"
+            placeholder="20000"
             value={form.suggestedPrice}
             onChange={(e) => update("suggestedPrice", e.target.value)}
             className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"

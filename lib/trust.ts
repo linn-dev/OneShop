@@ -2,6 +2,7 @@ export type SellerTrust = {
   id: string;
   name: string | null;
   email: string;
+  image?: string | null;
   phoneVerified: boolean;
   rating: number;
   dealsDone: number;

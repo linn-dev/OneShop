@@ -14,9 +14,9 @@ Look at the item photo and return JSON only (no markdown) with:
 - title: short marketplace listing title
 - description: 2-4 sentences, honest condition notes if visible
 - category: exactly one of ${ITEM_CATEGORIES.join(", ")}
-- suggestedPrice: a number (local second-hand price, no currency symbol)
+- suggestedPrice: a whole number in Myanmar kyat (MMK), no currency symbol (e.g. 20000)
 
-Be conservative on price. If the item is unclear, still make a best-effort listing.`;
+Be conservative on price. Typical second-hand prices are thousands of kyat, not US dollars. If the item is unclear, still make a best-effort listing.`;
 
 function extractJson(text: string): unknown {
   const trimmed = text.trim();
@@ -45,7 +45,7 @@ function toDraft(parsed: unknown): ListingDraft {
     title: title || "Second-hand item",
     description: description || "Gently used. Add extra details before publishing.",
     category: normalizeCategory(obj.category),
-    suggestedPrice: Number.isFinite(price) && price > 0 ? Math.round(price * 100) / 100 : 20,
+    suggestedPrice: Number.isFinite(price) && price > 0 ? Math.round(price) : 20000,
   };
 }
 
@@ -185,7 +185,7 @@ function fallbackDraft(): ListingDraft {
     description:
       "Photo uploaded. Add a title, condition notes, and a fair price before you publish.",
     category: "Other",
-    suggestedPrice: 20,
+    suggestedPrice: 20000,
   };
 }
 

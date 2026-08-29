@@ -23,7 +23,7 @@ async function main() {
     {
       title: "Vintage desk lamp",
       description: "Solid brass desk lamp, works great. Pickup near downtown library.",
-      price: 25,
+      price: 25000,
       category: "Home",
       imageUrl: "https://picsum.photos/seed/desk-lamp/800/600",
       lat: 16.8409,
@@ -32,7 +32,7 @@ async function main() {
     {
       title: "Mountain bike",
       description: "Used but well maintained. 21-speed, new tires last year.",
-      price: 140,
+      price: 140000,
       category: "Sports",
       imageUrl: "https://picsum.photos/seed/mtb/800/600",
       lat: 16.8512,
@@ -41,7 +41,7 @@ async function main() {
     {
       title: "Paperback stack",
       description: "Ten mixed novels in good condition. Meet at the cafe.",
-      price: 12,
+      price: 12000,
       category: "Books",
       imageUrl: "https://picsum.photos/seed/books/800/600",
       lat: 16.7794,
@@ -50,7 +50,7 @@ async function main() {
     {
       title: "Bluetooth speaker",
       description: "Portable speaker, slight scuff on the corner. Charges fine.",
-      price: 35,
+      price: 35000,
       category: "Electronics",
       imageUrl: "https://picsum.photos/seed/speaker/800/600",
       lat: null as number | null,
@@ -59,7 +59,7 @@ async function main() {
     {
       title: "Oak dining chair",
       description: "Solid oak side chair, minor wear on the seat. Pickup in Bahan.",
-      price: 45,
+      price: 45000,
       category: "Furniture",
       imageUrl: "https://picsum.photos/seed/oak-chair/800/600",
       lat: 16.812,
@@ -80,6 +80,11 @@ async function main() {
         },
       });
       created += 1;
+    } else if (existing.price !== listing.price) {
+      await prisma.item.update({
+        where: { id: existing.id },
+        data: { price: listing.price },
+      });
     }
   }
 

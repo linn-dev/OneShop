@@ -7,6 +7,7 @@ export type ListingCardItem = {
   price: number;
   imageUrl: string;
   category: string;
+  description?: string;
   user: {
     name: string | null;
     email: string;

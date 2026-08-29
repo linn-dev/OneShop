@@ -209,8 +209,16 @@ export function SellForm() {
         )}
         {provider === "fallback" && (
           <p className="mt-2 text-sm text-muted-foreground">
-            No OpenAI/Claude key found — fill in the details yourself, or add OPENAI_API_KEY /
-            ANTHROPIC_API_KEY.
+            No AI key found — fill in the details yourself, or add a free{" "}
+            <a
+              href="https://openrouter.ai/keys"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2"
+            >
+              OPENROUTER_API_KEY
+            </a>{" "}
+            to <code className="text-xs">.env</code>.
           </p>
         )}
       </div>

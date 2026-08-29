@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ItemCard, type ListingCardItem } from "@/components/item-card";
 import { ITEM_CATEGORIES } from "@/lib/categories";
 import { nearbySort, type Coords } from "@/lib/geo";
+import { matchesProductSearch } from "@/lib/search";
 import { cn } from "@/lib/utils";
 
 type Item = ListingCardItem & {
@@ -11,7 +12,7 @@ type Item = ListingCardItem & {
   lng: number | null;
 };
 
-export function HomeListings({ items }: { items: Item[] }) {
+export function HomeListings({ items, query = "" }: { items: Item[]; query?: string }) {
   const [category, setCategory] = useState<string>("all");
   const [sort, setSort] = useState<"newest" | "nearby">("newest");
   const [origin, setOrigin] = useState<Coords | null>(null);
@@ -38,13 +39,14 @@ export function HomeListings({ items }: { items: Item[] }) {
   }
 
   const visible = useMemo(() => {
+    const searched = items.filter((item) => matchesProductSearch(item, query));
     const filtered =
-      category === "all" ? items : items.filter((item) => item.category === category);
+      category === "all" ? searched : searched.filter((item) => item.category === category);
     if (sort === "nearby" && origin) {
       return nearbySort(filtered, origin);
     }
     return filtered;
-  }, [items, category, sort, origin]);
+  }, [items, category, sort, origin, query]);
 
   return (
     <div>
@@ -104,7 +106,9 @@ export function HomeListings({ items }: { items: Item[] }) {
           <p className="mt-12 text-center text-zinc-500">
             {items.length === 0
               ? "No listings yet. Run npm run seed, then sign in to publish more."
-              : "No items in this category."}
+              : query.trim()
+                ? `No products match “${query.trim()}”.`
+                : "No items in this category."}
           </p>
         ) : (
           <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,10 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { HomeListings } from "@/components/home-listings";
 import { LandingHero } from "@/components/landing-hero";
+import { matchesProductSearch } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: { q?: string };
+}) {
+  const query = searchParams.q ?? "";
   const [items, listingCount, verifiedSellers, dealAgg] = await Promise.all([
     prisma.item.findMany({
       where: { status: "available" },
@@ -22,16 +28,19 @@ export default async function HomePage() {
     }),
   ]);
 
-  const listings = items.map((item) => ({
-    id: item.id,
-    title: item.title,
-    price: item.price,
-    imageUrl: item.imageUrl,
-    category: item.category,
-    lat: item.lat,
-    lng: item.lng,
-    user: item.user,
-  }));
+  const listings = items
+    .filter((item) => matchesProductSearch(item, query))
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      imageUrl: item.imageUrl,
+      category: item.category,
+      description: item.description,
+      lat: item.lat,
+      lng: item.lng,
+      user: item.user,
+    }));
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:py-10">
@@ -48,12 +57,14 @@ export default async function HomePage() {
           <div>
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Nearby listings</h2>
             <p className="mt-1 text-sm text-zinc-500">
-              Browse locally. Sign in to sell or chat with a seller.
+              {query.trim()
+                ? `Results for “${query.trim()}”.`
+                : "Browse locally. Sign in to sell or chat with a seller."}
             </p>
           </div>
         </div>
 
-        <HomeListings items={listings} />
+        <HomeListings items={listings} query={query} />
       </section>
     </div>
   );

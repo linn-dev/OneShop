@@ -5,6 +5,20 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { MessageSeller } from "@/components/message-seller";
 import { SellerTrustBadge } from "@/components/seller-trust-badge";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const item = await prisma.item.findUnique({
+    where: { id: params.id },
+    select: { title: true },
+  });
+  if (!item) return { title: "Listing" };
+  return { title: item.title };
+}
 
 export default async function ItemPage({
   params,

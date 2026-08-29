@@ -38,8 +38,10 @@ export function Logo({ className }: { className?: string }) {
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span className={`text-lg font-semibold tracking-tight text-foreground ${className ?? ""}`}>
-      Swappr
+    <span
+      className={`whitespace-nowrap text-lg font-semibold tracking-tight text-foreground ${className ?? ""}`}
+    >
+      OneShopMM
     </span>
   );
 }

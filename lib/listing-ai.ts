@@ -9,7 +9,7 @@ export type ListingDraft = {
   suggestedPrice: number;
 };
 
-const PROMPT = `You are helping a seller on Swappr, a local second-hand marketplace.
+const PROMPT = `You are helping a seller on OneShopMM, a local second-hand marketplace.
 Look at the item photo and return JSON only (no markdown) with:
 - title: short marketplace listing title
 - description: 2-4 sentences, honest condition notes if visible
@@ -123,7 +123,7 @@ async function fromOpenRouter(imageUrl: string): Promise<ListingDraft> {
     imageUrl,
     extraHeaders: {
       "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
-      "X-Title": "Swappr",
+      "X-Title": "OneShopMM",
     },
   });
 }

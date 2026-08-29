@@ -64,7 +64,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-emerald-100/80 bg-background/75 shadow-sm shadow-emerald-950/[0.03] backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:gap-4">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
+        <Link href="/" title="OneShopMM" className="flex shrink-0 items-center gap-2">
           <Logo />
           <Wordmark className="hidden sm:inline" />
         </Link>

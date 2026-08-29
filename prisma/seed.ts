@@ -56,8 +56,18 @@ async function main() {
       lat: null as number | null,
       lng: null as number | null,
     },
+    {
+      title: "Oak dining chair",
+      description: "Solid oak side chair, minor wear on the seat. Pickup in Bahan.",
+      price: 45,
+      category: "Furniture",
+      imageUrl: "https://picsum.photos/seed/oak-chair/800/600",
+      lat: 16.812,
+      lng: 96.158,
+    },
   ];
 
+  let created = 0;
   for (const listing of listings) {
     const existing = await prisma.item.findFirst({
       where: { userId: seller.id, title: listing.title },
@@ -69,8 +79,13 @@ async function main() {
           userId: seller.id,
         },
       });
+      created += 1;
     }
   }
+
+  console.log(
+    `Seeded ${listings.length} demo items for ${seller.email} (${created} new, ${listings.length - created} already present).`,
+  );
 }
 
 main()

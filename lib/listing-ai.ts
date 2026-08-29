@@ -21,8 +21,17 @@ Be conservative on price. If the item is unclear, still make a best-effort listi
 function extractJson(text: string): unknown {
   const trimmed = text.trim();
   const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const raw = fence ? fence[1] : trimmed;
-  return JSON.parse(raw);
+  const raw = (fence ? fence[1] : trimmed).trim();
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(raw.slice(start, end + 1));
+    }
+    throw new Error("Model did not return valid JSON.");
+  }
 }
 
 function toDraft(parsed: unknown): ListingDraft {
@@ -56,17 +65,26 @@ async function loadImage(imageUrl: string) {
   return { buffer, mimeType: mimeFromPath(filePath), base64: buffer.toString("base64") };
 }
 
-async function fromOpenAI(imageUrl: string): Promise<ListingDraft> {
-  const { base64, mimeType } = await loadImage(imageUrl);
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+async function fromChatCompletions(opts: {
+  url: string;
+  apiKey: string;
+  model: string;
+  label: string;
+  imageUrl: string;
+  jsonObject?: boolean;
+  extraHeaders?: Record<string, string>;
+}): Promise<ListingDraft> {
+  const { base64, mimeType } = await loadImage(opts.imageUrl);
+  const res = await fetch(opts.url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${opts.apiKey}`,
       "Content-Type": "application/json",
+      ...opts.extraHeaders,
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      response_format: { type: "json_object" },
+      model: opts.model,
+      ...(opts.jsonObject ? { response_format: { type: "json_object" } } : {}),
       messages: [
         {
           role: "user",
@@ -84,15 +102,41 @@ async function fromOpenAI(imageUrl: string): Promise<ListingDraft> {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`OpenAI error: ${err.slice(0, 400)}`);
+    throw new Error(`${opts.label} error: ${err.slice(0, 400)}`);
   }
 
   const data = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
   };
   const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenAI returned an empty listing.");
+  if (!content) throw new Error(`${opts.label} returned an empty listing.`);
   return toDraft(extractJson(content));
+}
+
+async function fromOpenRouter(imageUrl: string): Promise<ListingDraft> {
+  return fromChatCompletions({
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    apiKey: process.env.OPENROUTER_API_KEY || "",
+    // Free vision-capable router; override with e.g. google/gemma-4-31b-it:free
+    model: process.env.OPENROUTER_MODEL || "openrouter/free",
+    label: "OpenRouter",
+    imageUrl,
+    extraHeaders: {
+      "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
+      "X-Title": "Swappr",
+    },
+  });
+}
+
+async function fromOpenAI(imageUrl: string): Promise<ListingDraft> {
+  return fromChatCompletions({
+    url: "https://api.openai.com/v1/chat/completions",
+    apiKey: process.env.OPENAI_API_KEY || "",
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    label: "OpenAI",
+    imageUrl,
+    jsonObject: true,
+  });
 }
 
 async function fromClaude(imageUrl: string): Promise<ListingDraft> {
@@ -147,8 +191,11 @@ function fallbackDraft(): ListingDraft {
 
 export async function generateListingFromImage(imageUrl: string): Promise<{
   listing: ListingDraft;
-  provider: "openai" | "claude" | "fallback";
+  provider: "openrouter" | "openai" | "claude" | "fallback";
 }> {
+  if (process.env.OPENROUTER_API_KEY) {
+    return { listing: await fromOpenRouter(imageUrl), provider: "openrouter" };
+  }
   if (process.env.OPENAI_API_KEY) {
     return { listing: await fromOpenAI(imageUrl), provider: "openai" };
   }

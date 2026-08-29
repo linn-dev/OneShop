@@ -2,8 +2,34 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ITEM_CATEGORIES, normalizeCategory } from "@/lib/categories";
 import { getCurrentUser } from "@/lib/session";
+import { matchesProductSearch, normalizeSearchQuery } from "@/lib/search";
 
 export const runtime = "nodejs";
+
+export async function GET(request: Request) {
+  const q = normalizeSearchQuery(new URL(request.url).searchParams.get("q") ?? "");
+  if (q.length < 1) {
+    return NextResponse.json({ items: [] });
+  }
+
+  const items = await prisma.item.findMany({
+    where: { status: "available" },
+    orderBy: { createdAt: "desc" },
+    take: 80,
+    select: {
+      id: true,
+      title: true,
+      price: true,
+      imageUrl: true,
+      category: true,
+      description: true,
+    },
+  });
+
+  return NextResponse.json({
+    items: items.filter((item) => matchesProductSearch(item, q)).slice(0, 8),
+  });
+}
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();

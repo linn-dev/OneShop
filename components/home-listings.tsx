@@ -102,7 +102,7 @@ export function HomeListings({ items }: { items: Item[] }) {
       {visible.length === 0 ? (
         <p className="mt-12 text-center text-zinc-500">
           {items.length === 0
-            ? "No listings yet. Sign in and publish the first one."
+            ? "No listings yet. Run npm run seed, then sign in to publish more."
             : "No items in this category."}
         </p>
       ) : (

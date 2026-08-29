@@ -23,12 +23,9 @@ export function nearbySort<T extends { lat: number | null; lng: number | null }>
   origin: Coords,
 ): T[] {
   return [...items].sort((a, b) => {
-    const aHas = hasCoords(a);
-    const bHas = hasCoords(b);
-    if (aHas && !bHas) return -1;
-    if (!aHas && bHas) return 1;
-    if (!aHas && !bHas) return 0;
-    return distanceKm(origin, a) - distanceKm(origin, b);
+    const da = hasCoords(a) ? distanceKm(origin, a) : Number.POSITIVE_INFINITY;
+    const db = hasCoords(b) ? distanceKm(origin, b) : Number.POSITIVE_INFINITY;
+    return da - db;
   });
 }
 

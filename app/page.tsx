@@ -1,19 +1,27 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { HomeListings } from "@/components/home-listings";
+import { LandingHero } from "@/components/landing-hero";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const items = await prisma.item.findMany({
-    where: { status: "available" },
-    include: {
-      user: {
-        select: { name: true, email: true, rating: true },
+  const [items, listingCount, verifiedSellers, dealAgg] = await Promise.all([
+    prisma.item.findMany({
+      where: { status: "available" },
+      include: {
+        user: {
+          select: { name: true, email: true, rating: true },
+        },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.item.count({ where: { status: "available" } }),
+    prisma.user.count({ where: { phoneVerified: true } }),
+    prisma.user.aggregate({
+      _sum: { dealsDone: true },
+      _avg: { rating: true },
+    }),
+  ]);
 
   const listings = items.map((item) => ({
     id: item.id,
@@ -27,23 +35,28 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Nearby listings</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Browse locally. Sign in to sell or chat with a seller.
-          </p>
-        </div>
-        <Link
-          href="/sell"
-          className="hidden rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white sm:inline-block"
-        >
-          List an item
-        </Link>
-      </div>
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:py-10">
+      <LandingHero
+        stats={{
+          listings: listingCount,
+          verifiedSellers,
+          dealsDone: dealAgg._sum.dealsDone ?? 0,
+          avgRating: dealAgg._avg.rating ?? 0,
+        }}
+      />
 
-      <HomeListings items={listings} />
+      <section id="listings" className="scroll-mt-20 pt-10">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Nearby listings</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Browse locally. Sign in to sell or chat with a seller.
+            </p>
+          </div>
+        </div>
+
+        <HomeListings items={listings} />
+      </section>
     </div>
   );
 }

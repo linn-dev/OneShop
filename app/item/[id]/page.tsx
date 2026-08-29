@@ -53,7 +53,7 @@ export default async function ItemPage({
           <SellerTrustBadge seller={item.user} />
         </div>
       </div>
-      <MessageSeller itemId={item.id} isOwner={isOwner} />
+      <MessageSeller itemId={item.id} isOwner={isOwner} itemStatus={item.status} />
     </div>
   );
 }

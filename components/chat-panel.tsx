@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  PUBLIC_MEETUP_PLACES,
+  safeMeetupTemplate,
+  type PublicMeetupPlace,
+} from "@/lib/meetup";
 
 type ChatMessage = {
   id: string;
@@ -15,21 +22,29 @@ type ChatMessage = {
 export default function ChatPanel({
   itemId,
   isOwner,
+  initialStatus = "available",
 }: {
   itemId: string;
   isOwner: boolean;
+  initialStatus?: string;
 }) {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
+  const [itemStatus, setItemStatus] = useState(initialStatus);
+  const [place, setPlace] = useState<PublicMeetupPlace>(PUBLIC_MEETUP_PLACES[0]);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [selling, setSelling] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/chat?itemId=${encodeURIComponent(itemId)}`);
     if (res.status === 401) return;
     const data = await res.json();
     setMessages(data.messages ?? []);
+    if (data.item?.status) setItemStatus(data.item.status);
   }, [itemId]);
 
   useEffect(() => {
@@ -38,25 +53,59 @@ export default function ChatPanel({
     }
   }, [status, load]);
 
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
+  }, [messages]);
+
+  async function sendMessage(body: string) {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId, text: body }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Could not send.");
+    }
+    if (data.message) {
+      setMessages((prev) => [...prev, data.message]);
+    }
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setPending(true);
     try {
-      const res = await fetch("/api/chat", {
+      await sendMessage(text);
+      setText("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function insertMeetupTemplate() {
+    setText(safeMeetupTemplate(place));
+  }
+
+  async function markAsSold() {
+    setError("");
+    setSelling(true);
+    try {
+      const res = await fetch(`/api/items/${encodeURIComponent(itemId)}/sold`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, text }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Could not send.");
+        setError(data.error || "Could not mark as sold.");
         return;
       }
-      setText("");
-      setMessages((prev) => [...prev, data.message]);
+      setItemStatus(data.item?.status ?? "sold");
+      router.refresh();
     } finally {
-      setPending(false);
+      setSelling(false);
     }
   }
 
@@ -85,12 +134,38 @@ export default function ChatPanel({
     );
   }
 
+  const sold = itemStatus === "sold";
+
   return (
-    <div className="rounded-2xl border border-zinc-200 p-4">
-      <h2 className="font-medium">
-        {isOwner ? "Messages from buyers" : "Chat with seller"}
-      </h2>
-      <div className="mt-3 max-h-72 space-y-2 overflow-y-auto rounded-lg bg-zinc-50 p-3">
+    <div className="flex flex-col rounded-2xl border border-zinc-200 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-medium">
+            {isOwner ? "Conversation" : "Chat with seller"}
+          </h2>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            {sold
+              ? "This listing is sold."
+              : "Arrange a public meetup. Never share your home address."}
+          </p>
+        </div>
+        {isOwner && (
+          <Button
+            type="button"
+            size="sm"
+            variant={sold ? "secondary" : "outline"}
+            disabled={sold || selling}
+            onClick={markAsSold}
+          >
+            {sold ? "Sold" : selling ? "Marking…" : "Mark as sold"}
+          </Button>
+        )}
+      </div>
+
+      <div
+        ref={listRef}
+        className="mt-3 max-h-72 min-h-40 space-y-2 overflow-y-auto rounded-lg bg-zinc-50 p-3"
+      >
         {messages.length === 0 ? (
           <p className="text-sm text-zinc-500">
             {isOwner
@@ -103,7 +178,7 @@ export default function ChatPanel({
             return (
               <div
                 key={m.id}
-                className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                className={`max-w-[85%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm ${
                   mine
                     ? "ml-auto bg-zinc-900 text-white"
                     : "bg-white text-zinc-800 shadow-sm"
@@ -118,18 +193,45 @@ export default function ChatPanel({
           })
         )}
       </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <select
+          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-zinc-900"
+          value={place}
+          onChange={(e) => setPlace(e.target.value as PublicMeetupPlace)}
+          disabled={sold}
+        >
+          {PUBLIC_MEETUP_PLACES.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={sold}
+          onClick={insertMeetupTemplate}
+        >
+          Suggest safe meetup
+        </Button>
+      </div>
+
       <form onSubmit={onSubmit} className="mt-3 flex gap-2">
-        <input
-          className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+        <textarea
+          className="min-h-10 flex-1 resize-y rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Write a message"
+          rows={2}
           required
+          disabled={sold}
         />
         <button
           type="submit"
-          disabled={pending}
-          className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+          disabled={pending || sold}
+          className="self-end rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
           Send
         </button>

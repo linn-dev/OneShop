@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 export function MessageSeller({
   itemId,
   isOwner,
+  itemStatus = "available",
 }: {
   itemId: string;
   isOwner: boolean;
+  itemStatus?: string;
 }) {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(isOwner);
@@ -41,7 +43,7 @@ export function MessageSeller({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemId }),
       });
-      const data = await res.json();
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         setError(data.error || "Could not start a conversation.");
         return;
@@ -61,7 +63,7 @@ export function MessageSeller({
   }
 
   if (isOwner) {
-    return <ChatPanel itemId={itemId} isOwner />;
+    return <ChatPanel itemId={itemId} isOwner initialStatus={itemStatus} />;
   }
 
   if (!session) {
@@ -102,5 +104,5 @@ export function MessageSeller({
     );
   }
 
-  return <ChatPanel itemId={itemId} isOwner={false} />;
+  return <ChatPanel itemId={itemId} isOwner={false} initialStatus={itemStatus} />;
 }

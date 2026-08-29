@@ -6,6 +6,7 @@ import { ChevronLeft, MessageCircle, X } from "lucide-react";
 import ChatPanel from "@/components/chat-panel";
 import { ItemCard } from "@/components/item-card";
 import { SellerTrustBadge } from "@/components/seller-trust-badge";
+import { UserAvatar } from "@/components/user-avatar";
 import type { SellerTrust } from "@/lib/trust";
 
 export type ProfileItem = {
@@ -108,15 +109,25 @@ export function ProfileView({
 
   return (
     <div className="space-y-6 pb-24">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Account
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Your profile</h1>
-        <p className="mt-1 text-sm text-zinc-500">Your listings, all in one place.</p>
+      <div className="flex items-center gap-4">
+        <UserAvatar
+          src={user.image}
+          alt={user.name || user.email}
+          size="xl"
+          className="ring-2 ring-emerald-100"
+        />
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Account
+          </p>
+          <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight">
+            {user.name || "Your profile"}
+          </h1>
+          <p className="mt-1 truncate text-sm text-zinc-500">{user.email}</p>
+        </div>
       </div>
 
-      <SellerTrustBadge seller={user} />
+      <SellerTrustBadge seller={user} showAvatar={false} />
 
       <section>
         <div className="mb-4 flex items-end justify-between gap-2">
@@ -272,9 +283,7 @@ export function ProfileView({
                         onClick={() => setSelectedConversationId(c.id)}
                         className="flex w-full gap-3 px-4 py-3 text-left hover:bg-emerald-50/80"
                       >
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800">
-                          {label.slice(0, 2).toUpperCase()}
-                        </span>
+                        <UserAvatar alt={label} size="md" />
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center justify-between gap-2">
                             <span className="truncate text-sm font-medium">{label}</span>

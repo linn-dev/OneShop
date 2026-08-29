@@ -5,6 +5,21 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { MessageSeller } from "@/components/message-seller";
 import { SellerTrustBadge } from "@/components/seller-trust-badge";
+import { formatPrice } from "@/lib/money";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const item = await prisma.item.findUnique({
+    where: { id: params.id },
+    select: { title: true },
+  });
+  if (!item) return { title: "Listing" };
+  return { title: item.title };
+}
 
 export default async function ItemPage({
   params,
@@ -54,7 +69,7 @@ export default async function ItemPage({
           {item.status !== "available" ? ` · ${item.status}` : ""}
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">{item.title}</h1>
-        <p className="mt-1 text-xl font-medium">${item.price.toFixed(2)}</p>
+        <p className="mt-1 text-xl font-medium">{formatPrice(item.price)}</p>
         <p className="mt-3 whitespace-pre-wrap text-sm text-zinc-600">
           {item.description}
         </p>

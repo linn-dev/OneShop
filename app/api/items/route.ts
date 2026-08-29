@@ -46,7 +46,9 @@ export async function POST(request: Request) {
   const description = typeof body.description === "string" ? body.description.trim() : "";
   const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl.trim() : "";
   const priceRaw = body.price ?? body.suggestedPrice;
-  const price = typeof priceRaw === "number" ? priceRaw : Number.parseFloat(String(priceRaw ?? ""));
+  const price = Math.round(
+    typeof priceRaw === "number" ? priceRaw : Number.parseFloat(String(priceRaw ?? "")),
+  );
   const category = normalizeCategory(body.category);
   const lat = typeof body.lat === "number" ? body.lat : undefined;
   const lng = typeof body.lng === "number" ? body.lng : undefined;

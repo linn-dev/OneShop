@@ -1,23 +1,16 @@
 import { BadgeCheck } from "lucide-react";
+import { UserAvatar } from "@/components/user-avatar";
 import { trustLabel, trustLevel, type SellerTrust } from "@/lib/trust";
 import { cn } from "@/lib/utils";
-
-function sellerInitials(seller: Pick<SellerTrust, "name" | "email">): string {
-  const source = (seller.name || seller.email).trim();
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
-  }
-  const local = source.includes("@") ? source.slice(0, source.indexOf("@")) : source;
-  return local.slice(0, 2).toUpperCase();
-}
 
 export function SellerTrustBadge({
   seller,
   compact = false,
+  showAvatar = true,
 }: {
   seller: SellerTrust;
   compact?: boolean;
+  showAvatar?: boolean;
 }) {
   const level = trustLevel(seller);
   const label = trustLabel(level);
@@ -33,17 +26,13 @@ export function SellerTrustBadge({
       )}
     >
       <div className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-            level === "trusted" && "bg-emerald-100 text-emerald-800",
-            level === "good" && "bg-sky-100 text-sky-800",
-            level === "new" && "bg-zinc-200 text-zinc-700",
-          )}
-        >
-          {sellerInitials(seller)}
-        </span>
+        {showAvatar && (
+          <UserAvatar
+            src={seller.image}
+            alt={displayName}
+            size="md"
+          />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <p className="flex min-w-0 items-center gap-1 font-medium text-zinc-900">

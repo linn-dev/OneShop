@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/money";
 
 type Suggestion = {
   id: string;
@@ -124,7 +125,7 @@ export function ProductSearch({ className }: { className?: string }) {
                     <span className="text-xs text-zinc-500">{item.category}</span>
                   </span>
                   <span className="text-sm font-medium tabular-nums text-emerald-800">
-                    ${item.price.toFixed(2)}
+                    {formatPrice(item.price)}
                   </span>
                 </Link>
               </li>

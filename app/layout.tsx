@@ -17,10 +17,19 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Swappr",
+  applicationName: "OneShopMM",
+  title: {
+    default: "OneShopMM",
+    template: "%s | OneShopMM",
+  },
   description: "Snap a photo. AI lists it. Trade locally with trust.",
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
+  openGraph: {
+    title: "OneShopMM",
+    siteName: "OneShopMM",
+    description: "Snap a photo. AI lists it. Trade locally with trust.",
   },
 };
 
